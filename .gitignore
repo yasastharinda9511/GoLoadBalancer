@@ -47,3 +47,8 @@ go.work.sum
 
 # Build directories
 /build/
+
+# Ignore specific Go files
+
+go1.23.1.linux-amd64.tar.gz
+go1.23.1.linux-amd64.tar.gz.sha256
