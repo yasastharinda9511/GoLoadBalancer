@@ -29,8 +29,9 @@ func main() {
 	ruleStore.AddRule("abc", hRule)
 	ruleStore.PrintAllRules()
 
-	pipeline := pipeline.NewProcessingPipeline(ruleStore, poolSelector)
-	srv := server.NewServer("3333", pipeline)
+	reponsePipeline := pipeline.NewResponseProcessingPipeline()
+	reqpipeline := pipeline.NewRequestProcessingPipeline(ruleStore, poolSelector, reponsePipeline)
+	srv := server.NewServer("3333", reqpipeline)
 
 	// Register routes
 	srv.RegisterRoutes()

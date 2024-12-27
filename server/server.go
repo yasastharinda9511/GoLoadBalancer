@@ -11,10 +11,10 @@ import (
 type Server struct {
 	Port     string
 	mux      *http.ServeMux
-	pipeline *pipeline.ProcessingPipeline
+	pipeline *pipeline.RequestProcessingPipeline
 }
 
-func NewServer(port string, pipeline *pipeline.ProcessingPipeline) *Server {
+func NewServer(port string, pipeline *pipeline.RequestProcessingPipeline) *Server {
 	return &Server{
 		Port:     port,
 		mux:      http.NewServeMux(),

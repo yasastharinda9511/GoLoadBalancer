@@ -6,6 +6,7 @@ import (
 )
 
 type HttpRequestMessage struct {
+	*Message
 	headers        map[string]string
 	method         string
 	query          map[string]string
@@ -34,6 +35,7 @@ func NewHttpRequestMessage(w http.ResponseWriter, r *http.Request) *HttpRequestM
 	}
 
 	return &HttpRequestMessage{
+		Message:        NewMessage(),
 		headers:        headers,
 		method:         r.Method,
 		query:          queryParams,
