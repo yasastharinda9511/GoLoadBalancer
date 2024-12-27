@@ -1,11 +1,8 @@
 package pipeline
 
 import (
-	"io"
 	"net/http"
-	"time"
 
-	"github.com/yasastharinda9511/go_gateway_api/dispatcher"
 	"github.com/yasastharinda9511/go_gateway_api/message"
 	"github.com/yasastharinda9511/go_gateway_api/pool"
 	"github.com/yasastharinda9511/go_gateway_api/ruleStore"
@@ -29,38 +26,32 @@ func NewRequestProcessingPipeline(ruleStore *ruleStore.RuleStore, poolSelector *
 // Execute processes the HTTP request
 func (p *RequestProcessingPipeline) Execute(requestMessage *message.HttpRequestMessage) {
 	// Add your processing logic here
-	rw := requestMessage.GetResponseWriter()
 	println("Processing request...")
-	dispatch := dispatcher.NewHTTPDispatcher(10 * time.Second)
-	ruleID := p.ruleStore.Evaluate(requestMessage)
-	pool, _ := p.poolSelector.GetPool(ruleID)
+	ruleID, ruleErr := p.ruleStore.Evaluate(requestMessage)
 
-	if pool != nil {
-		backend, _ := pool.Next()
-		println("Backend: ", backend.GetURL())
-
-		// Make the backend call
-		resp, err := dispatch.CallBackend(dispatcher.GET, backend.GetURL(), requestMessage.GetHeaders(), requestMessage.GetQueryParams())
-		if err != nil {
-			// Write an error response
-			http.Error(rw, "Failed to call backend", http.StatusInternalServerError)
-			return
-		}
-		defer resp.Body.Close()
-
-		// Read backend response
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			http.Error(rw, "Failed to read backend response", http.StatusInternalServerError)
-			return
-		}
-
-		// Write the backend response to the client
-		statusCode := resp.StatusCode
-		responseMsg := message.NewHttpResponseMessage(statusCode, body, requestMessage)
-
-		// Process the response
-		p.ResponseProcessingPipeline.Execute(responseMsg)
+	if ruleErr != nil {
+		p.handleError(ruleErr)
 	}
 
+	pool, poolErr := p.poolSelector.GetPool(ruleID)
+
+	if poolErr != nil {
+		p.handleError(poolErr)
+	}
+
+	statusCode, body, backendErr := pool.HandleBackendCall(requestMessage)
+
+	if backendErr != nil {
+		p.handleError(backendErr)
+	}
+
+	responseMsg := message.NewHttpResponseMessage(statusCode, body, requestMessage)
+
+	p.ResponseProcessingPipeline.Execute(responseMsg)
+}
+
+func (p *RequestProcessingPipeline) handleError(err error) {
+	errorMsg := []byte(err.Error())
+	responseMsg := message.NewHttpResponseMessage(http.StatusInternalServerError, errorMsg, nil)
+	p.ResponseProcessingPipeline.Execute(responseMsg)
 }

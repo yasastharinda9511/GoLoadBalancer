@@ -2,6 +2,8 @@ package pool
 
 import (
 	"sync"
+
+	"github.com/yasastharinda9511/go_gateway_api/errors"
 )
 
 // PoolSelector maintains a map of pools
@@ -25,11 +27,14 @@ func (ps *PoolSelector) AddPool(pool *Pool) {
 }
 
 // GetPool retrieves a pool by its ID
-func (ps *PoolSelector) GetPool(id string) (*Pool, bool) {
+func (ps *PoolSelector) GetPool(id string) (*Pool, error) {
 	ps.mu.RLock()
 	defer ps.mu.RUnlock()
-	pool, exists := ps.pools[id]
-	return pool, exists
+	pool, exit := ps.pools[id]
+	if exit {
+		return pool, nil
+	}
+	return pool, errors.NewPoolNotFoundError(id)
 }
 
 // RemovePool removes a pool by its ID

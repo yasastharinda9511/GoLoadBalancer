@@ -3,6 +3,7 @@ package ruleStore
 // RuleStore holds a map of rule lists indexed by an ID
 
 import (
+	"github.com/yasastharinda9511/go_gateway_api/errors"
 	"github.com/yasastharinda9511/go_gateway_api/message"
 	"github.com/yasastharinda9511/go_gateway_api/rules"
 )
@@ -28,8 +29,7 @@ func (rs *RuleStore) GetRules(id string) []rules.Rule {
 	return rs.rules[id]
 }
 
-// give me a evaloate function
-func (rs *RuleStore) Evaluate(request *message.HttpRequestMessage) string {
+func (rs *RuleStore) Evaluate(request *message.HttpRequestMessage) (string, error) {
 	println("Evaluating rules")
 	for id, ruleList := range rs.rules {
 		eval := true
@@ -40,10 +40,10 @@ func (rs *RuleStore) Evaluate(request *message.HttpRequestMessage) string {
 			}
 		}
 		if eval {
-			return id
+			return id, nil
 		}
 	}
-	return ""
+	return "", errors.NewRuleNotFoundError(request.GetUID())
 }
 
 func (rs *RuleStore) PrintAllRules() {
