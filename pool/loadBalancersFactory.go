@@ -26,3 +26,16 @@ func LoadBalancerFactory(lbType LoadBalancerType, backends []*Backend) (LoadBala
 		return nil, errors.New("unknown load balancer type")
 	}
 }
+
+func ParseLoadBalancerType(lbType string) (LoadBalancerType, error) {
+	switch lbType {
+	case string(WEIGHTEDLOADBALANCER):
+		return WEIGHTEDLOADBALANCER, nil
+	case string(ROUNDROBINLOADBALANCER):
+		return ROUNDROBINLOADBALANCER, nil
+	case string(RANDOMLOADBALANCER):
+		return RANDOMLOADBALANCER, nil
+	default:
+		return "", errors.New("invalid load balancer type")
+	}
+}

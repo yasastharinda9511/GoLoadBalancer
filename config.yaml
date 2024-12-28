@@ -1,0 +1,18 @@
+server:
+  base_port: 3333
+  server_count: 2
+
+rules:
+  - id: "rule1"
+    header_rules:
+      - key: "Yasas"
+        value: "tharinda"
+    pool:
+      load_balancer: "WEIGHTEDLOADBALANCER"
+      backends:
+        - url: "http://localhost:3000"
+          weight: 1
+        - url: "http://localhost:3001"
+          weight: 1
+        - url: "http://localhost:3002"
+          weight: 1
