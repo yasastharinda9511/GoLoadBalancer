@@ -40,7 +40,27 @@ func (t *PathTrie) Insert(path string, rule rules.Rule) {
 }
 
 // Match matches a request path against the trie and returns the associated rules
-func (t *PathTrie) Match(path string) []rules.Rule {
+func (t *PathTrie) MatchAllPaths(path string) []rules.Rule {
+	parts := strings.Split(path, "/")
+	node := t.root
+	var matchedRules []rules.Rule
+
+	for _, part := range parts {
+
+		if child, exists := node.children["*"]; exists && child.isEnd {
+			matchedRules = append(matchedRules, child.rules...)
+		}
+		if child, exists := node.children[part]; exists {
+			node = child
+		}
+		if node.isEnd {
+			matchedRules = append(matchedRules, node.rules...)
+		}
+	}
+	return matchedRules
+}
+
+func (t *PathTrie) MatchExactPaths(path string) []rules.Rule {
 	parts := strings.Split(path, "/")
 	node := t.root
 	var matchedRules []rules.Rule
@@ -48,13 +68,26 @@ func (t *PathTrie) Match(path string) []rules.Rule {
 	for _, part := range parts {
 		if child, exists := node.children[part]; exists {
 			node = child
-		} else if child, exists := node.children["*"]; exists {
-			node = child
-		} else {
-			return nil
 		}
 		if node.isEnd {
 			matchedRules = append(matchedRules, node.rules...)
+		}
+	}
+	return matchedRules
+}
+
+func (t *PathTrie) MatchPrefixPaths(path string) []rules.Rule {
+	parts := strings.Split(path, "/")
+	node := t.root
+	var matchedRules []rules.Rule
+
+	for _, part := range parts {
+
+		if child, exists := node.children["*"]; exists && child.isEnd {
+			matchedRules = append(matchedRules, child.rules...)
+		}
+		if child, exists := node.children[part]; exists {
+			node = child
 		}
 	}
 	return matchedRules
@@ -79,7 +112,7 @@ func (rs *RuleStore) AddRule(path string, rule rules.Rule) {
 
 // GetRules retrieves the list of rules for the given path
 func (rs *RuleStore) GetRules(path string) []rules.Rule {
-	return rs.trie.Match(path)
+	return rs.trie.MatchAllPaths(path)
 }
 
 // PrintAllRules prints all rules in the store
