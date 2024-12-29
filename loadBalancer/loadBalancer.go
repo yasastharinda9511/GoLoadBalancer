@@ -137,6 +137,9 @@ func (b *LoadBalancerBuilder) Build() (*LoadBalancer, error) {
 
 		}
 
+		pathRule := rule.PathRule
+
+		b.addPathRule(loadBalancer.GetRuleStores(), rule_id, pathRule.Path, pathRule.Type)
 		pool := rule.Pool
 		loadBalancerType := pool.LoadBalancer
 		backends := pool.Backends
@@ -154,6 +157,18 @@ func (b *LoadBalancerBuilder) addHeaderRule(ruleStore []*ruleStore.RuleStore, ru
 		headerRule := rules.NewHeaderRule(key, value)
 		headerRule.Print()
 		rs.AddRule(ruleID, headerRule)
+	}
+}
+
+func (b *LoadBalancerBuilder) addPathRule(ruleStore []*ruleStore.RuleStore, ruleID string, path string, pathType string) {
+	for _, rs := range ruleStore {
+
+		if pathType == "prefix" {
+			path += "/*"
+		}
+		pathRule := rules.NewPathRule(path)
+		pathRule.Print()
+		rs.AddRule(ruleID, pathRule)
 	}
 }
 

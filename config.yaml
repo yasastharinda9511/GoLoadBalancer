@@ -4,6 +4,9 @@ server:
 
 rules:
   - id: "rule1"
+    path_rule:
+        path: "/api"
+        type: "PREFIX"
     header_rules:
       - key: "Yasas"
         value: "tharinda"

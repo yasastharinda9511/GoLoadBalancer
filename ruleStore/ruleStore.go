@@ -40,6 +40,22 @@ func (rs *RuleStore) GetRules(id string) []rules.Rule {
 }
 
 func (rs *RuleStore) Evaluate(request *message.HttpRequestMessage) (string, error) {
+
+	// Get the rule IDs that match the request path
+
+	ruleIDs := rs.pathtrie.MatchExactPaths(request.GetURL())
+
+	for _, ruleID := range ruleIDs {
+		fmt.Println("Evaluating rules for rule ID:", ruleID)
+		if ruleList, exists := rs.rules[ruleID]; exists {
+			for _, rule := range ruleList {
+				if rule.Evaluate(request) {
+					return ruleID, nil
+				}
+			}
+		}
+	}
+
 	println("Evaluating rules")
 	for id, ruleList := range rs.rules {
 		eval := true
