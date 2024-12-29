@@ -1,6 +1,7 @@
 package pipeline
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/yasastharinda9511/go_gateway_api/message"
@@ -30,19 +31,22 @@ func (p *RequestProcessingPipeline) Execute(requestMessage *message.HttpRequestM
 	ruleID, ruleErr := p.ruleStore.Evaluate(requestMessage)
 
 	if ruleErr != nil {
-		p.handleError(ruleErr)
+		p.handleError(ruleErr, requestMessage)
+		return
 	}
 
 	pool, poolErr := p.poolSelector.GetPool(ruleID)
 
 	if poolErr != nil {
-		p.handleError(poolErr)
+		p.handleError(poolErr, requestMessage)
+		return
 	}
 
 	statusCode, body, backendErr := pool.HandleBackendCall(requestMessage)
 
 	if backendErr != nil {
-		p.handleError(backendErr)
+		p.handleError(backendErr, requestMessage)
+		return
 	}
 
 	responseMsg := message.NewHttpResponseMessage(statusCode, body, requestMessage)
@@ -50,8 +54,9 @@ func (p *RequestProcessingPipeline) Execute(requestMessage *message.HttpRequestM
 	p.ResponseProcessingPipeline.Execute(responseMsg)
 }
 
-func (p *RequestProcessingPipeline) handleError(err error) {
+func (p *RequestProcessingPipeline) handleError(err error, requestMessage *message.HttpRequestMessage) {
+	fmt.Print("Error occurred: ")
 	errorMsg := []byte(err.Error())
-	responseMsg := message.NewHttpResponseMessage(http.StatusInternalServerError, errorMsg, nil)
+	responseMsg := message.NewHttpResponseMessage(http.StatusInternalServerError, errorMsg, requestMessage)
 	p.ResponseProcessingPipeline.Execute(responseMsg)
 }

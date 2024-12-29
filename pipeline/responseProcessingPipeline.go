@@ -1,6 +1,7 @@
 package pipeline
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/yasastharinda9511/go_gateway_api/message"
@@ -15,6 +16,7 @@ func NewResponseProcessingPipeline() *ResponseProcessingPipeline {
 
 func (p *ResponseProcessingPipeline) Execute(msg any) {
 	// Try to cast the generic Message to HttpResponseMessage
+	fmt.Println("executing response processing pipeline")
 	responseMessage, ok := msg.(*message.HttpResponseMessage)
 	if !ok {
 		log.Println("Error: Provided message is not of type HttpResponseMessage")
