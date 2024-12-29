@@ -1,16 +1,15 @@
 package pathtrie
 
 import (
+	"fmt"
 	"strings"
-
-	"github.com/yasastharinda9511/go_gateway_api/rules"
 )
 
 // TrieNode represents a node in the path trie
 type TrieNode struct {
 	children map[string]*TrieNode
 	isEnd    bool
-	rules    []rules.Rule
+	rule_ids []string
 }
 
 // PathTrie represents the trie structure
@@ -26,7 +25,7 @@ func NewPathTrie() *PathTrie {
 }
 
 // Insert inserts a path and associated rules into the trie
-func (t *PathTrie) Insert(path string, rule rules.Rule) {
+func (t *PathTrie) Insert(path string, rule_id string) {
 	parts := strings.Split(path, "/")
 	node := t.root
 	for _, part := range parts {
@@ -36,55 +35,56 @@ func (t *PathTrie) Insert(path string, rule rules.Rule) {
 		node = node.children[part]
 	}
 	node.isEnd = true
-	node.rules = append(node.rules, rule)
+	node.rule_ids = append(node.rule_ids, rule_id)
+
 }
 
 // Match matches a request path against the trie and returns the associated rules
-func (t *PathTrie) MatchAllPaths(path string) []rules.Rule {
+func (t *PathTrie) MatchAllPaths(path string) []string {
 	parts := strings.Split(path, "/")
 	node := t.root
-	var matchedRules []rules.Rule
+	var matchedRules []string
 
 	for _, part := range parts {
 
 		if child, exists := node.children["*"]; exists && child.isEnd {
-			matchedRules = append(matchedRules, child.rules...)
+			matchedRules = append(matchedRules, child.rule_ids...)
 		}
 		if child, exists := node.children[part]; exists {
 			node = child
 		}
 		if node.isEnd {
-			matchedRules = append(matchedRules, node.rules...)
+			matchedRules = append(matchedRules, node.rule_ids...)
 		}
 	}
 	return matchedRules
 }
 
-func (t *PathTrie) MatchExactPaths(path string) []rules.Rule {
+func (t *PathTrie) MatchExactPaths(path string) []string {
 	parts := strings.Split(path, "/")
 	node := t.root
-	var matchedRules []rules.Rule
+	var matchedRules []string
 
 	for _, part := range parts {
 		if child, exists := node.children[part]; exists {
 			node = child
 		}
 		if node.isEnd {
-			matchedRules = append(matchedRules, node.rules...)
+			matchedRules = append(matchedRules, node.rule_ids...)
 		}
 	}
 	return matchedRules
 }
 
-func (t *PathTrie) MatchPrefixPaths(path string) []rules.Rule {
+func (t *PathTrie) MatchPrefixPaths(path string) []string {
 	parts := strings.Split(path, "/")
 	node := t.root
-	var matchedRules []rules.Rule
+	var matchedRules []string
 
 	for _, part := range parts {
 
 		if child, exists := node.children["*"]; exists && child.isEnd {
-			matchedRules = append(matchedRules, child.rules...)
+			matchedRules = append(matchedRules, child.rule_ids...)
 		}
 		if child, exists := node.children[part]; exists {
 			node = child
@@ -106,12 +106,12 @@ func NewRuleStore() *RuleStore {
 }
 
 // AddRule adds a rule to the store under the given path
-func (rs *RuleStore) AddRule(path string, rule rules.Rule) {
-	rs.trie.Insert(path, rule)
+func (rs *RuleStore) AddRule(path string, rule_id string) {
+	rs.trie.Insert(path, rule_id)
 }
 
 // GetRules retrieves the list of rules for the given path
-func (rs *RuleStore) GetRules(path string) []rules.Rule {
+func (rs *RuleStore) GetRules(path string) []string {
 	return rs.trie.MatchAllPaths(path)
 }
 
@@ -122,8 +122,8 @@ func (rs *RuleStore) PrintAllRules() {
 	traverse = func(node *TrieNode, path string) {
 		if node.isEnd {
 			println("Path:", path)
-			for _, rule := range node.rules {
-				rule.Print()
+			for _, rule := range node.rule_ids {
+				fmt.Printf("	Rule: %s\n", rule)
 			}
 		}
 		for part, child := range node.children {

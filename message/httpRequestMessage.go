@@ -55,3 +55,6 @@ func (request *HttpRequestMessage) GetHeaders() map[string]string {
 func (request *HttpRequestMessage) GetQueryParams() map[string]string {
 	return request.query
 }
+func (request *HttpRequestMessage) GetURL() string {
+	return request.httpRequest.URL.String()
+}
