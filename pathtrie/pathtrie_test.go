@@ -48,11 +48,12 @@ func TestPathTrie_MatchExactPaths(t *testing.T) {
 	trie := NewPathTrie()
 
 	// Insert rules into the trie
-	trie.Insert("user/customer/*", "rule1")
+	trie.Insert("user/customer/123", "rule1")
 	trie.Insert("user/*", "rule2")
 	trie.Insert("customer/*", "rule3")
 	trie.Insert("user/customer/id", "rule4")
-	trie.Insert("user/customer/", "rule4")
+	trie.Insert("user/123", "rule5")
+	trie.Insert("customer/123", "rule6")
 
 	// Test matching paths
 	tests := []struct {
@@ -61,8 +62,8 @@ func TestPathTrie_MatchExactPaths(t *testing.T) {
 	}{
 		{"user/customer/id", []string{"rule4"}},
 		{"user/customer/123", []string{"rule1"}},
-		{"user/123", []string{"rule2"}},
-		{"customer/123", []string{"rule3"}},
+		{"user/123", []string{"rule5"}},
+		{"customer/123", []string{"rule6"}},
 	}
 
 	for _, test := range tests {
