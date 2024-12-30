@@ -26,6 +26,7 @@ func NewPathTrie() *PathTrie {
 
 // Insert inserts a path and associated rules into the trie
 func (t *PathTrie) Insert(path string, rule_id string) {
+	fmt.Printf("Insert path is %s", path)
 	parts := strings.Split(path, "/")
 	node := t.root
 	for _, part := range parts {
@@ -68,10 +69,13 @@ func (t *PathTrie) MatchExactPaths(path string) []string {
 	for _, part := range parts {
 		if child, exists := node.children[part]; exists {
 			node = child
+		} else {
+			return matchedRules
 		}
-		if node.isEnd {
-			matchedRules = append(matchedRules, node.rule_ids...)
-		}
+	}
+
+	if node.isEnd {
+		matchedRules = append(matchedRules, node.rule_ids...)
 	}
 	return matchedRules
 }
@@ -88,6 +92,8 @@ func (t *PathTrie) MatchPrefixPaths(path string) []string {
 		}
 		if child, exists := node.children[part]; exists {
 			node = child
+		} else {
+			break
 		}
 	}
 	return matchedRules

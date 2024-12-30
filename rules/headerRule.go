@@ -20,9 +20,6 @@ func NewHeaderRule(header, headerValue string) *HeaderRule {
 
 // Evaluate checks if the request contains the specified header with the specified value
 func (r *HeaderRule) Evaluate(request *message.HttpRequestMessage) bool {
-
-	println("Evaluating Header Rule")
-	println(request.GetHeaders()[r.header] == r.headerValue)
 	return request.GetHeaders()[r.header] == r.headerValue
 }
 

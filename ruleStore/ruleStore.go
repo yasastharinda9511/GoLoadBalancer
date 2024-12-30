@@ -45,18 +45,23 @@ func (rs *RuleStore) Evaluate(request *message.HttpRequestMessage) (string, erro
 
 	ruleIDs := rs.pathtrie.MatchExactPaths(request.GetURL())
 
+	fmt.Printf("match exact path count %d", len(ruleIDs))
 	for _, ruleID := range ruleIDs {
-		fmt.Println("Evaluating rules for rule ID:", ruleID)
-		if ruleList, exists := rs.rules[ruleID]; exists {
-			for _, rule := range ruleList {
-				if rule.Evaluate(request) {
-					return ruleID, nil
-				}
-			}
+		if rs.evaluateRuleID(ruleID, request) {
+			fmt.Printf("Exact Match %s\n", ruleID)
+			return ruleID, nil
 		}
 	}
 
-	println("Evaluating rules")
+	ruleIDs = rs.pathtrie.MatchPrefixPaths(request.GetURL())
+	fmt.Printf("match prefix path count %d", len(ruleIDs))
+	for _, ruleID := range ruleIDs {
+		if rs.evaluateRuleID(ruleID, request) {
+			fmt.Printf("Exact Match %s\n", ruleID)
+			return ruleID, nil
+		}
+	}
+
 	for id, ruleList := range rs.rules {
 		eval := true
 		for _, rule := range ruleList {
@@ -79,4 +84,16 @@ func (rs *RuleStore) PrintAllRules() {
 			fmt.Print(rule)
 		}
 	}
+}
+
+func (rs *RuleStore) evaluateRuleID(ruleID string, request *message.HttpRequestMessage) bool {
+	if ruleList, exists := rs.rules[ruleID]; exists {
+		for _, rule := range ruleList {
+			if !rule.Evaluate(request) {
+				return false
+			}
+		}
+		return true
+	}
+	return false
 }

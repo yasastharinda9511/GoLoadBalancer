@@ -106,7 +106,6 @@ func (b *LoadBalancerBuilder) Build() (*LoadBalancer, error) {
 
 	basePort := cfg.Server.BasePort
 	serverCount := cfg.Server.ServerCount
-	fmt.Println(serverCount)
 
 	for i := 0; i < serverCount; i++ {
 
@@ -125,14 +124,11 @@ func (b *LoadBalancerBuilder) Build() (*LoadBalancer, error) {
 		loadBalancer.AddResponseProcessingPipeline(reponsePipeline)
 	}
 
-	fmt.Println("Rules Count : ", len(cfg.Rules))
 	rules := cfg.Rules
-	fmt.Print(len(rules))
 	for _, rule := range rules {
 		rule_id := rule.ID
 
 		for _, header := range rule.HeaderRules {
-			fmt.Print(len(loadBalancer.GetRuleStores()))
 			b.addHeaderRule(loadBalancer.GetRuleStores(), rule_id, header.Key, header.Value)
 
 		}
@@ -155,7 +151,6 @@ func (b *LoadBalancerBuilder) addHeaderRule(ruleStore []*ruleStore.RuleStore, ru
 	for _, rs := range ruleStore {
 
 		headerRule := rules.NewHeaderRule(key, value)
-		headerRule.Print()
 		rs.AddRule(ruleID, headerRule)
 	}
 }
@@ -163,11 +158,13 @@ func (b *LoadBalancerBuilder) addHeaderRule(ruleStore []*ruleStore.RuleStore, ru
 func (b *LoadBalancerBuilder) addPathRule(ruleStore []*ruleStore.RuleStore, ruleID string, path string, pathType string) {
 	for _, rs := range ruleStore {
 
-		if pathType == "prefix" {
-			path += "/*"
+		newPath := path
+
+		if pathType == "PREFIX" {
+			newPath += "/*"
+
 		}
-		pathRule := rules.NewPathRule(path)
-		pathRule.Print()
+		pathRule := rules.NewPathRule(newPath)
 		rs.AddRule(ruleID, pathRule)
 	}
 }
