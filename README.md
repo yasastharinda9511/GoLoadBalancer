@@ -15,7 +15,7 @@ This repository contains a Go-based Load Balancer that distributes incoming requ
 
 Ensure you have the following installed:
 
-- [Go](https://golang.org/dl/) (version 1.18 or higher)
+- [Go](https://golang.org/dl/) (version 1.23 or higher)
 - Git
 
 ---
