@@ -39,8 +39,6 @@ func (lb *WeightedLoadBalancer) LoadBalance() (*Backend, error) {
 	lb.current = (lb.current + 1) % lb.toltalWeight
 
 	currentWeight := lb.current
-	println(lb.current)
-	println(lb.toltalWeight)
 	for _, backend := range lb.backends {
 		if currentWeight < backend.weight {
 			return backend, nil

@@ -45,19 +45,15 @@ func (rs *RuleStore) Evaluate(request *message.HttpRequestMessage) (string, erro
 
 	ruleIDs := rs.pathtrie.MatchExactPaths(request.GetURL())
 
-	//fmt.Printf("match exact path count %d", len(ruleIDs))
 	for _, ruleID := range ruleIDs {
 		if rs.evaluateRuleID(ruleID, request) {
-			fmt.Printf("Exact Match %s\n", ruleID)
 			return ruleID, nil
 		}
 	}
 
 	ruleIDs = rs.pathtrie.MatchPrefixPaths(request.GetURL())
-	//fmt.Printf("match prefix path count %d", len(ruleIDs))
 	for _, ruleID := range ruleIDs {
 		if rs.evaluateRuleID(ruleID, request) {
-			//fmt.Printf("Exact Match %s\n", ruleID)
 			return ruleID, nil
 		}
 	}
