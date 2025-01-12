@@ -11,7 +11,7 @@ rules:
       - key: "Yasas"
         value: "tharinda"
     pool:
-      load_balancer: "WEIGHTEDLOADBALANCER"
+      load_balancer: "RANDOMLOADBALANCER"
       backends:
         - url: "http://localhost:3000"
           weight: 1
@@ -26,9 +26,9 @@ rules:
     pool:
       load_balancer: "WEIGHTEDLOADBALANCER"
       backends:
-        - url: "http://localhost:3005"
+        - url: "http://localhost:3000"
           weight: 1
-        - url: "http://localhost:3006"
+        - url: "http://localhost:3001"
           weight: 1
-        - url: "http://localhost:3007"
+        - url: "http://localhost:3002"
           weight: 1

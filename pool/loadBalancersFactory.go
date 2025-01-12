@@ -22,6 +22,12 @@ func LoadBalancerFactory(lbType LoadBalancerType, backends []*Backend) (LoadBala
 			return nil, err
 		}
 		return lb, nil
+	case RANDOMLOADBALANCER:
+		lb, err := NewRandomLoadBalancer(backends)
+		if err != nil {
+			return nil, err
+		}
+		return lb, nil
 	default:
 		return nil, errors.New("unknown load balancer type")
 	}
