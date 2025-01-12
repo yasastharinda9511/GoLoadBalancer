@@ -10,14 +10,27 @@ type HttpResponseMessage struct {
 	body               []byte
 }
 
-func NewHttpResponseMessage(statusCode int, body []byte, httpRequestMessage *HttpRequestMessage) *HttpResponseMessage {
+// (statusCode int, body []byte, httpRequestMessage *HttpRequestMessage
+func NewHttpResponseMessage() *HttpResponseMessage {
 	return &HttpResponseMessage{
 		Message:            NewMessage(),
-		httpRequestMessage: httpRequestMessage,
+		httpRequestMessage: nil,
 		headers:            make(map[string]string),
-		statusCode:         statusCode,
-		body:               body,
+		statusCode:         200,
+		body:               nil,
 	}
+}
+
+func (response *HttpResponseMessage) SetStatusCode(statusCode int) {
+	response.statusCode = statusCode
+}
+
+func (response *HttpResponseMessage) SetBody(body []byte) {
+	response.body = body
+}
+
+func (response *HttpResponseMessage) SetHttpRequestMessage(httpRequestMessage *HttpRequestMessage) {
+	response.httpRequestMessage = httpRequestMessage
 }
 
 func (response *HttpResponseMessage) GetHeaders() map[string]string {
@@ -43,4 +56,12 @@ func (response *HttpResponseMessage) WriteTo(w http.ResponseWriter) error {
 	w.WriteHeader(response.statusCode)
 	_, err := w.Write(response.body)
 	return err
+}
+
+func (request *HttpResponseMessage) Clear() {
+	for k := range request.headers {
+		delete(request.headers, k)
+	}
+	request.httpRequestMessage = nil
+	request.body = nil
 }

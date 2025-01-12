@@ -2,7 +2,6 @@ package pipeline
 
 import (
 	"fmt"
-	"net/http"
 
 	"github.com/yasastharinda9511/go_gateway_api/message"
 	"github.com/yasastharinda9511/go_gateway_api/pool"
@@ -13,21 +12,30 @@ import (
 type RequestProcessingPipeline struct {
 	ruleStore                  *ruleStore.RuleStore
 	poolSelector               *pool.PoolSelector
-	ResponseProcessingPipeline *ResponseProcessingPipeline
+	responseProcessingPipeline *ResponseProcessingPipeline
+	requestMessagePool         *message.Pool[*message.HttpRequestMessage]
+	responseMessagePool        *message.Pool[*message.HttpResponseMessage]
 }
 
 // NewProcessingPipeline creates a new instance of ProcessingPipeline
-func NewRequestProcessingPipeline(ruleStore *ruleStore.RuleStore, poolSelector *pool.PoolSelector, responseProcessinPipeline *ResponseProcessingPipeline) *RequestProcessingPipeline {
+func NewRequestProcessingPipeline(ruleStore *ruleStore.RuleStore,
+	poolSelector *pool.PoolSelector,
+	responseProcessinPipeline *ResponseProcessingPipeline,
+	requestMessagePool *message.Pool[*message.HttpRequestMessage],
+	responseMessagePool *message.Pool[*message.HttpResponseMessage],
+) *RequestProcessingPipeline {
 	return &RequestProcessingPipeline{
-		ruleStore:    ruleStore,
-		poolSelector: poolSelector,
+		ruleStore:                  ruleStore,
+		poolSelector:               poolSelector,
+		responseProcessingPipeline: responseProcessinPipeline,
+		requestMessagePool:         requestMessagePool,
+		responseMessagePool:        responseMessagePool,
 	}
 }
 
 // Execute processes the HTTP request
 func (p *RequestProcessingPipeline) Execute(requestMessage *message.HttpRequestMessage) {
-	// Add your processing logic here
-	println("Processing request...")
+	// Add your processing logic heredd
 	ruleID, ruleErr := p.ruleStore.Evaluate(requestMessage)
 
 	if ruleErr != nil {
@@ -49,14 +57,21 @@ func (p *RequestProcessingPipeline) Execute(requestMessage *message.HttpRequestM
 		return
 	}
 
-	responseMsg := message.NewHttpResponseMessage(statusCode, body, requestMessage)
+	responseMsg := p.responseMessagePool.Get()
+	responseMsg.SetHttpRequestMessage(requestMessage)
+	responseMsg.SetStatusCode(statusCode)
+	responseMsg.SetBody(body)
 
-	p.ResponseProcessingPipeline.Execute(responseMsg)
+	p.responseProcessingPipeline.Execute(responseMsg)
 }
 
 func (p *RequestProcessingPipeline) handleError(err error, requestMessage *message.HttpRequestMessage) {
 	fmt.Print("Error occurred: ")
 	errorMsg := []byte(err.Error())
-	responseMsg := message.NewHttpResponseMessage(http.StatusInternalServerError, errorMsg, requestMessage)
-	p.ResponseProcessingPipeline.Execute(responseMsg)
+	responseMsg := p.responseMessagePool.Get()
+	responseMsg.SetHttpRequestMessage(requestMessage)
+	responseMsg.SetStatusCode(404)
+	responseMsg.SetBody(errorMsg)
+
+	p.responseProcessingPipeline.Execute(responseMsg)
 }

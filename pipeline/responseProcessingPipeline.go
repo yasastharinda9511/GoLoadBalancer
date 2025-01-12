@@ -1,35 +1,33 @@
 package pipeline
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/yasastharinda9511/go_gateway_api/message"
 )
 
-type ResponseProcessingPipeline struct{}
+type ResponseProcessingPipeline struct {
+	requestMessagePool  *message.Pool[*message.HttpRequestMessage]
+	responseMessagePool *message.Pool[*message.HttpResponseMessage]
+}
 
 // NewProcessingPipeline creates a new instance of ProcessingPipeline
-func NewResponseProcessingPipeline() *ResponseProcessingPipeline {
-	return &ResponseProcessingPipeline{}
+func NewResponseProcessingPipeline(reqMessagePool *message.Pool[*message.HttpRequestMessage], resMessagePool *message.Pool[*message.HttpResponseMessage]) *ResponseProcessingPipeline {
+	return &ResponseProcessingPipeline{
+		requestMessagePool:  reqMessagePool,
+		responseMessagePool: resMessagePool,
+	}
 }
 
 func (p *ResponseProcessingPipeline) Execute(msg any) {
 	// Try to cast the generic Message to HttpResponseMessage
-	fmt.Println("executing response processing pipeline")
 	responseMessage, ok := msg.(*message.HttpResponseMessage)
 	if !ok {
 		log.Println("Error: Provided message is not of type HttpResponseMessage")
 		return
 	}
 
-	// Access data from the HttpResponseMessage
-	log.Printf("Processing response with UID: %s\n", responseMessage.GetUID())
-	log.Printf("Status Code: %d\n", responseMessage.GetStatusCode())
-
 	// Retrieve and process the body
-	body := responseMessage.GetBody()
-	log.Printf("Body: %s\n", string(body))
 
 	responseWriter := responseMessage.GetHttpRequestMessage().GetResponseWriter()
 
@@ -37,4 +35,12 @@ func (p *ResponseProcessingPipeline) Execute(msg any) {
 	if err := responseMessage.WriteTo(responseWriter); err != nil {
 		log.Printf("Error writing response: %v\n", err)
 	}
+
+	requestMessage := responseMessage.GetHttpRequestMessage()
+	requestMessage.Clear()
+	responseMessage.Clear()
+
+	p.requestMessagePool.Put(requestMessage)
+	p.responseMessagePool.Put(responseMessage)
+
 }

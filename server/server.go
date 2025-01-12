@@ -9,16 +9,18 @@ import (
 )
 
 type Server struct {
-	Port     string
-	mux      *http.ServeMux
-	pipeline *pipeline.RequestProcessingPipeline
+	Port               string
+	mux                *http.ServeMux
+	pipeline           *pipeline.RequestProcessingPipeline
+	requestMessagePool *message.Pool[*message.HttpRequestMessage]
 }
 
-func NewServer(port string, pipeline *pipeline.RequestProcessingPipeline) *Server {
+func NewServer(port string, pipeline *pipeline.RequestProcessingPipeline, requestMessagePool *message.Pool[*message.HttpRequestMessage]) *Server {
 	return &Server{
-		Port:     port,
-		mux:      http.NewServeMux(),
-		pipeline: pipeline,
+		Port:               port,
+		mux:                http.NewServeMux(),
+		pipeline:           pipeline,
+		requestMessagePool: requestMessagePool,
 	}
 }
 
@@ -36,7 +38,13 @@ func (s *Server) Start() error {
 
 func (s *Server) handler(w http.ResponseWriter, r *http.Request) {
 	// Use your message package to extract data from the request
-	requestMessage := message.NewHttpRequestMessage(w, r)
+
+	requestMessage := s.requestMessagePool.Get()
+	requestMessage.SetHeaders(r)
+	requestMessage.SetQueryParams(r)
+	requestMessage.SetMethod(r)
+	requestMessage.SetResponseWriter(w)
+	requestMessage.SetHttpRequest(r)
 	s.pipeline.Execute(requestMessage)
 	// Respond back to the client
 }
