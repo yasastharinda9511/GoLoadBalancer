@@ -1,7 +1,6 @@
 package message
 
 import (
-	"log"
 	"net/http"
 )
 
@@ -14,33 +13,14 @@ type HttpRequestMessage struct {
 	httpRequest    *http.Request
 }
 
-func NewHttpRequestMessage(w http.ResponseWriter, r *http.Request) *HttpRequestMessage {
-	// Extract headers into a map
-
-	log.Println("Initializing HttpRequestMessage...")
-
-	log.Printf("Method %s \n", r.Method)
-
-	headers := make(map[string]string)
-	for key, values := range r.Header {
-		log.Printf("Header - Key: %s, Value: %s\n", key, values[0])
-		headers[key] = values[0] // Take the first value for simplicity
-	}
-
-	// Extract query parameters into a map
-	queryParams := make(map[string]string)
-	for key, values := range r.URL.Query() {
-		log.Printf("Query Parameter - Key: %s, Value: %s\n", key, values[0])
-		queryParams[key] = values[0] // Take the first value for simplicity
-	}
-
+func NewHttpRequestMessage() *HttpRequestMessage {
 	return &HttpRequestMessage{
 		Message:        NewMessage(),
-		headers:        headers,
-		method:         r.Method,
-		query:          queryParams,
-		responseWriter: w,
-		httpRequest:    r,
+		headers:        make(map[string]string),
+		method:         "",
+		query:          make(map[string]string),
+		responseWriter: nil,
+		httpRequest:    nil,
 	}
 }
 
@@ -57,4 +37,41 @@ func (request *HttpRequestMessage) GetQueryParams() map[string]string {
 }
 func (request *HttpRequestMessage) GetURL() string {
 	return request.httpRequest.URL.String()
+}
+
+func (request *HttpRequestMessage) SetResponseWriter(responseWriter http.ResponseWriter) {
+	request.responseWriter = responseWriter
+}
+
+func (request *HttpRequestMessage) SetHttpRequest(httpRequest *http.Request) {
+	request.httpRequest = httpRequest
+}
+
+func (request *HttpRequestMessage) SetHeaders(r *http.Request) {
+	for key, values := range r.Header {
+		request.headers[key] = values[0] // Take the first value for simplicity
+	}
+}
+
+func (request *HttpRequestMessage) SetQueryParams(r *http.Request) {
+	for key, values := range r.URL.Query() {
+		request.query[key] = values[0] // Take the first value for simplicity
+	}
+}
+
+func (request *HttpRequestMessage) SetMethod(r *http.Request) {
+	request.method = r.Method
+}
+
+func (request *HttpRequestMessage) Clear() {
+	for k := range request.headers {
+		delete(request.headers, k)
+	}
+
+	for k := range request.query {
+		delete(request.query, k)
+	}
+
+	request.responseWriter = nil
+	request.httpRequest = nil
 }

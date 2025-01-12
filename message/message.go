@@ -24,3 +24,7 @@ func (base *Message) GetQueryParams() string {
 func (base *Message) GetUID() string {
 	return base.uid
 }
+
+func (base *Message) GenerateUID() {
+	base.uid = uuid.New().String()
+}

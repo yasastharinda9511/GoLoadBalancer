@@ -5,6 +5,7 @@ import (
 	"log"
 	"sync"
 
+	"github.com/yasastharinda9511/go_gateway_api/message"
 	"github.com/yasastharinda9511/go_gateway_api/pipeline"
 	"github.com/yasastharinda9511/go_gateway_api/pool"
 	"github.com/yasastharinda9511/go_gateway_api/ruleStore"
@@ -19,6 +20,7 @@ type LoadBalancer struct {
 	poolSelectors               []*pool.PoolSelector
 	requestProcessingPipeline   []*pipeline.RequestProcessingPipeline
 	responseProcessingPipelines []*pipeline.ResponseProcessingPipeline
+	requestPools                []*message.Pool[*message.HttpRequestMessage]
 }
 
 func NewLoadBalancer() *LoadBalancer {
@@ -28,6 +30,7 @@ func NewLoadBalancer() *LoadBalancer {
 		poolSelectors:               []*pool.PoolSelector{},
 		requestProcessingPipeline:   []*pipeline.RequestProcessingPipeline{},
 		responseProcessingPipelines: []*pipeline.ResponseProcessingPipeline{},
+		requestPools:                []*message.Pool[*message.HttpRequestMessage]{},
 	}
 }
 
@@ -111,9 +114,19 @@ func (b *LoadBalancerBuilder) Build() (*LoadBalancer, error) {
 
 		ruleStore := ruleStore.NewRuleStore()
 		poolSelector := pool.NewPoolSelector()
-		reponsePipeline := pipeline.NewResponseProcessingPipeline()
-		reqpipeline := pipeline.NewRequestProcessingPipeline(ruleStore, poolSelector, reponsePipeline)
-		srv := server.NewServer(fmt.Sprint(basePort+i), reqpipeline)
+
+		requestMessagePool := message.NewPool(func() *message.HttpRequestMessage {
+			return message.NewHttpRequestMessage()
+		})
+
+		responseMessagePool := message.NewPool(func() *message.HttpResponseMessage {
+			return message.NewHttpResponseMessage()
+		})
+
+		reponsePipeline := pipeline.NewResponseProcessingPipeline(requestMessagePool, responseMessagePool)
+		reqpipeline := pipeline.NewRequestProcessingPipeline(ruleStore, poolSelector, reponsePipeline, requestMessagePool, responseMessagePool)
+
+		srv := server.NewServer(fmt.Sprint(basePort+i), reqpipeline, requestMessagePool)
 
 		srv.RegisterRoutes()
 
