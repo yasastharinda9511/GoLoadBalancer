@@ -1,11 +1,10 @@
 package pipeline
 
 import (
-	"fmt"
-
 	"github.com/yasastharinda9511/go_gateway_api/message"
 	"github.com/yasastharinda9511/go_gateway_api/pool"
 	"github.com/yasastharinda9511/go_gateway_api/ruleStore"
+	"github.com/yasastharinda9511/go_gateway_api/urlRewriter"
 )
 
 // ProcessingPipeline defines the structure for the processing pipeline
@@ -15,6 +14,7 @@ type RequestProcessingPipeline struct {
 	responseProcessingPipeline *ResponseProcessingPipeline
 	requestMessagePool         *message.Pool[*message.HttpRequestMessage]
 	responseMessagePool        *message.Pool[*message.HttpResponseMessage]
+	urlRewriter                *urlRewriter.URLRewriter
 }
 
 // NewProcessingPipeline creates a new instance of ProcessingPipeline
@@ -23,6 +23,7 @@ func NewRequestProcessingPipeline(ruleStore *ruleStore.RuleStore,
 	responseProcessinPipeline *ResponseProcessingPipeline,
 	requestMessagePool *message.Pool[*message.HttpRequestMessage],
 	responseMessagePool *message.Pool[*message.HttpResponseMessage],
+	urlRewriter *urlRewriter.URLRewriter,
 ) *RequestProcessingPipeline {
 	return &RequestProcessingPipeline{
 		ruleStore:                  ruleStore,
@@ -30,6 +31,7 @@ func NewRequestProcessingPipeline(ruleStore *ruleStore.RuleStore,
 		responseProcessingPipeline: responseProcessinPipeline,
 		requestMessagePool:         requestMessagePool,
 		responseMessagePool:        responseMessagePool,
+		urlRewriter:                urlRewriter,
 	}
 }
 
@@ -41,6 +43,11 @@ func (p *RequestProcessingPipeline) Execute(requestMessage *message.HttpRequestM
 	if ruleErr != nil {
 		p.handleError(ruleErr, requestMessage)
 		return
+	}
+
+	rewriteURL := p.urlRewriter.GetRewriteURL(ruleID)
+	if rewriteURL != "" {
+		requestMessage.SetURL(rewriteURL)
 	}
 
 	pool, poolErr := p.poolSelector.GetPool(ruleID)
@@ -66,7 +73,6 @@ func (p *RequestProcessingPipeline) Execute(requestMessage *message.HttpRequestM
 }
 
 func (p *RequestProcessingPipeline) handleError(err error, requestMessage *message.HttpRequestMessage) {
-	fmt.Print("Error occurred: ")
 	errorMsg := []byte(err.Error())
 	responseMsg := p.responseMessagePool.Get()
 	responseMsg.SetHttpRequestMessage(requestMessage)

@@ -19,6 +19,8 @@ rules:
           weight: 1
         - url: "http://localhost:3002"
           weight: 1
+    rewrite_url:
+      path: "/apitest"
   - id: "rule2"
     path_rule:
         path: "/pet"

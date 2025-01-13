@@ -55,7 +55,8 @@ func (p *Pool) HandleBackendCall(requestMessage *message.HttpRequestMessage) (in
 	}
 
 	dispatch := dispatcher.NewHTTPDispatcher(10 * time.Second)
-	resp, err := dispatch.CallBackend(dispatcher.GET, backend.GetURL(), requestMessage.GetHeaders(), requestMessage.GetQueryParams())
+	endcall := backend.GetURL() + requestMessage.GetURL()
+	resp, err := dispatch.CallBackend(dispatcher.GET, endcall, requestMessage.GetHeaders(), requestMessage.GetQueryParams())
 
 	if err != nil {
 		// Write an error response

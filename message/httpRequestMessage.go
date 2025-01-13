@@ -11,6 +11,7 @@ type HttpRequestMessage struct {
 	query          map[string]string
 	responseWriter http.ResponseWriter
 	httpRequest    *http.Request
+	url            string
 }
 
 func NewHttpRequestMessage() *HttpRequestMessage {
@@ -21,6 +22,7 @@ func NewHttpRequestMessage() *HttpRequestMessage {
 		query:          make(map[string]string),
 		responseWriter: nil,
 		httpRequest:    nil,
+		url:            "",
 	}
 }
 
@@ -35,8 +37,9 @@ func (request *HttpRequestMessage) GetHeaders() map[string]string {
 func (request *HttpRequestMessage) GetQueryParams() map[string]string {
 	return request.query
 }
+
 func (request *HttpRequestMessage) GetURL() string {
-	return request.httpRequest.URL.String()
+	return request.url
 }
 
 func (request *HttpRequestMessage) SetResponseWriter(responseWriter http.ResponseWriter) {
@@ -57,6 +60,10 @@ func (request *HttpRequestMessage) SetQueryParams(r *http.Request) {
 	for key, values := range r.URL.Query() {
 		request.query[key] = values[0] // Take the first value for simplicity
 	}
+}
+
+func (request *HttpRequestMessage) SetURL(url string) {
+	request.url = url
 }
 
 func (request *HttpRequestMessage) SetMethod(r *http.Request) {

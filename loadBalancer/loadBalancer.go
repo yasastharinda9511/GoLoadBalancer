@@ -11,6 +11,7 @@ import (
 	"github.com/yasastharinda9511/go_gateway_api/ruleStore"
 	"github.com/yasastharinda9511/go_gateway_api/rules"
 	"github.com/yasastharinda9511/go_gateway_api/server"
+	"github.com/yasastharinda9511/go_gateway_api/urlRewriter"
 	"github.com/yasastharinda9511/go_gateway_api/yamlLoader"
 )
 
@@ -21,6 +22,7 @@ type LoadBalancer struct {
 	requestProcessingPipeline   []*pipeline.RequestProcessingPipeline
 	responseProcessingPipelines []*pipeline.ResponseProcessingPipeline
 	requestPools                []*message.Pool[*message.HttpRequestMessage]
+	urlRewriters                []*urlRewriter.URLRewriter
 }
 
 func NewLoadBalancer() *LoadBalancer {
@@ -31,6 +33,7 @@ func NewLoadBalancer() *LoadBalancer {
 		requestProcessingPipeline:   []*pipeline.RequestProcessingPipeline{},
 		responseProcessingPipelines: []*pipeline.ResponseProcessingPipeline{},
 		requestPools:                []*message.Pool[*message.HttpRequestMessage]{},
+		urlRewriters:                []*urlRewriter.URLRewriter{},
 	}
 }
 
@@ -54,6 +57,10 @@ func (lb *LoadBalancer) AddResponseProcessingPipeline(responseProcessingPipeline
 	lb.responseProcessingPipelines = append(lb.responseProcessingPipelines, responseProcessingPipeline)
 }
 
+func (lb *LoadBalancer) AddUrlRewriters(urlRewriter *urlRewriter.URLRewriter) {
+	lb.urlRewriters = append(lb.urlRewriters, urlRewriter)
+}
+
 func (lb *LoadBalancer) GetServers() []*server.Server {
 	return lb.servers
 }
@@ -72,6 +79,10 @@ func (lb *LoadBalancer) GetRequestProcessingPipelines() []*pipeline.RequestProce
 
 func (lb *LoadBalancer) GetResponseProcessingPipelines() []*pipeline.ResponseProcessingPipeline {
 	return lb.responseProcessingPipelines
+}
+
+func (lb *LoadBalancer) GetURLRewriters() []*urlRewriter.URLRewriter {
+	return lb.urlRewriters
 }
 
 func (lb *LoadBalancer) Start() {
@@ -114,6 +125,7 @@ func (b *LoadBalancerBuilder) Build() (*LoadBalancer, error) {
 
 		ruleStore := ruleStore.NewRuleStore()
 		poolSelector := pool.NewPoolSelector()
+		urlRewriter := urlRewriter.NewURLRewriter()
 
 		requestMessagePool := message.NewPool(func() *message.HttpRequestMessage {
 			return message.NewHttpRequestMessage()
@@ -124,7 +136,7 @@ func (b *LoadBalancerBuilder) Build() (*LoadBalancer, error) {
 		})
 
 		reponsePipeline := pipeline.NewResponseProcessingPipeline(requestMessagePool, responseMessagePool)
-		reqpipeline := pipeline.NewRequestProcessingPipeline(ruleStore, poolSelector, reponsePipeline, requestMessagePool, responseMessagePool)
+		reqpipeline := pipeline.NewRequestProcessingPipeline(ruleStore, poolSelector, reponsePipeline, requestMessagePool, responseMessagePool, urlRewriter)
 
 		srv := server.NewServer(fmt.Sprint(basePort+i), reqpipeline, requestMessagePool)
 
@@ -135,15 +147,17 @@ func (b *LoadBalancerBuilder) Build() (*LoadBalancer, error) {
 		loadBalancer.AddPoolSelector(poolSelector)
 		loadBalancer.AddRequestProcessingPipeline(reqpipeline)
 		loadBalancer.AddResponseProcessingPipeline(reponsePipeline)
+		loadBalancer.AddUrlRewriters(urlRewriter)
 	}
 
 	rules := cfg.Rules
 	for _, rule := range rules {
 		rule_id := rule.ID
 
+		rewritePath := rule.RewriteURL.RewritePath
+
 		for _, header := range rule.HeaderRules {
 			b.addHeaderRule(loadBalancer.GetRuleStores(), rule_id, header.Key, header.Value)
-
 		}
 
 		pathRule := rule.PathRule
@@ -154,7 +168,9 @@ func (b *LoadBalancerBuilder) Build() (*LoadBalancer, error) {
 		backends := pool.Backends
 
 		b.addPool(rule_id, loadBalancer.GetPoolSelectors(), loadBalancerType, backends)
-
+		if rewritePath != "" {
+			b.addURLRewrites(rule_id, rewritePath, loadBalancer.GetURLRewriters())
+		}
 	}
 
 	return loadBalancer, nil
@@ -199,5 +215,11 @@ func (b *LoadBalancerBuilder) addPool(ruleId string, poolSelector []*pool.PoolSe
 
 		pool := pool.NewPool(ruleId, lbType, poolBackends)
 		ps.AddPool(pool)
+	}
+}
+
+func (b *LoadBalancerBuilder) addURLRewrites(ruleId string, rewriteURL string, ruleWriters []*urlRewriter.URLRewriter) {
+	for _, ur := range ruleWriters {
+		ur.InsertRewriteURL(ruleId, rewriteURL)
 	}
 }

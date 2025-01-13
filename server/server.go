@@ -45,6 +45,7 @@ func (s *Server) handler(w http.ResponseWriter, r *http.Request) {
 	requestMessage.SetMethod(r)
 	requestMessage.SetResponseWriter(w)
 	requestMessage.SetHttpRequest(r)
+	requestMessage.SetURL(r.URL.String())
 	s.pipeline.Execute(requestMessage)
 	// Respond back to the client
 }
