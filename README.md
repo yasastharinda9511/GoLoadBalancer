@@ -55,7 +55,7 @@ $ cd GoLoadBalancer
 1. Start the Load Balancer with a configuration file:
 
    ```bash
-   $ ./bin/loadbalancer
+   $ ./bin/loadbalancer -c ./config.yaml
    ```
 
 2. Sample configuration file:
