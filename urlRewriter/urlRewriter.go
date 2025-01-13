@@ -1,7 +1,5 @@
 package urlRewriter
 
-import "fmt"
-
 type URLRewriter struct {
 	rewriteURL map[string]string
 }
@@ -14,9 +12,7 @@ func NewURLRewriter() *URLRewriter {
 }
 
 func (rewriter *URLRewriter) GetRewriteURL(ruleID string) string {
-	fmt.Println("ruleID is ", ruleID)
 	if url, exists := rewriter.rewriteURL[ruleID]; exists {
-		fmt.Println("url is ", url)
 		return url
 	}
 	return ""
