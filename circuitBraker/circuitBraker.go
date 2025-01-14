@@ -1,7 +1,6 @@
 package circuitBraker
 
 import (
-	"fmt"
 	"sync"
 	"time"
 )
@@ -39,19 +38,11 @@ func (cb *CircuitBreaker) State() State {
 	defer cb.mutex.Unlock()
 
 	switch cb.state {
-	case Closed:
-		fmt.Println("updated to closed state")
 	case Open:
-		fmt.Println("time since last failure ", time.Since(cb.lastFailureTime).Milliseconds())
 		if time.Duration(time.Since(cb.lastFailureTime).Milliseconds()) > cb.resetTimeout {
-			fmt.Println("updated to half open state")
 			cb.state = HalfOpen
 			break
 		}
-
-		fmt.Println("updated to open state")
-	case HalfOpen:
-		fmt.Println("updated to half open state")
 	}
 	return cb.state
 }
@@ -65,21 +56,16 @@ func (cb *CircuitBreaker) HandleFail() {
 	case Closed:
 		cb.failureCount++
 		if cb.failureCount > cb.maxFailures {
-			fmt.Println("After Failing open state")
 			cb.state = Open
 			cb.lastFailureTime = time.Now()
 			return
 		}
-		fmt.Println("After failing closed state")
 	case Open:
-		fmt.Println("After Failing open state  ", cb.state)
 		cb.lastFailureTime = time.Now()
 	case HalfOpen:
-		fmt.Println("After Failing open state")
 		cb.state = Open
 		cb.lastFailureTime = time.Now()
 	}
-	fmt.Print("  ")
 }
 
 func (cb *CircuitBreaker) HandleSuccess() {
