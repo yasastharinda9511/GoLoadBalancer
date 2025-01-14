@@ -1,6 +1,10 @@
 package pool
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/yasastharinda9511/go_gateway_api/circuitBraker"
+)
 
 type Protocol string
 
@@ -11,38 +15,42 @@ const (
 )
 
 type Backend struct {
-	url      string
-	weight   int
-	active   bool
-	protocol Protocol
+	url           string
+	weight        int
+	active        bool
+	protocol      Protocol
+	circuitBraker *circuitBraker.CircuitBreaker
 }
 
 // NewBackend creates a new Backend instance
 func NewBackend(url string, weight int) *Backend {
 
 	return &Backend{
-		url:      url,
-		weight:   weight,
-		active:   true,
-		protocol: deriveProtocol(url),
+		url:           url,
+		weight:        weight,
+		active:        true,
+		protocol:      deriveProtocol(url),
+		circuitBraker: circuitBraker.NewCircuitBreaker(5, 5000, 5),
 	}
 }
 
 func NewBackendWithWeight(url string) *Backend {
 	return &Backend{
-		url:      url,
-		weight:   1,
-		active:   true,
-		protocol: deriveProtocol(url),
+		url:           url,
+		weight:        1,
+		active:        true,
+		protocol:      deriveProtocol(url),
+		circuitBraker: circuitBraker.NewCircuitBreaker(5, 5000, 5),
 	}
 }
 
 func NewBackendWithActive(url string, weight int, active bool) *Backend {
 	return &Backend{
-		url:      url,
-		weight:   weight,
-		active:   active,
-		protocol: deriveProtocol(url),
+		url:           url,
+		weight:        weight,
+		active:        active,
+		protocol:      deriveProtocol(url),
+		circuitBraker: circuitBraker.NewCircuitBreaker(5, 5000, 5),
 	}
 }
 
@@ -68,6 +76,10 @@ func (b *Backend) IsActive() bool {
 
 func (b *Backend) GetProtocol() Protocol {
 	return b.protocol
+}
+
+func (b *Backend) GetCircuitBreaker() *circuitBraker.CircuitBreaker {
+	return b.circuitBraker
 }
 
 func deriveProtocol(url string) Protocol {
