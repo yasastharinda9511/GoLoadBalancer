@@ -4,4 +4,5 @@ package pool
 type LoadBalancer interface {
 	// Select chooses a server from the pool based on the load balancing strategy.
 	LoadBalance() (*Backend, error)
+	UpdateBackends(backends []*Backend)
 }

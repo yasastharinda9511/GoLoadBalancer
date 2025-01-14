@@ -215,6 +215,10 @@ func (b *LoadBalancerBuilder) addPool(ruleId string, poolSelector []*pool.PoolSe
 
 		pool := pool.NewPool(ruleId, lbType, poolBackends)
 		ps.AddPool(pool)
+		fmt.Println("######################################################")
+		fmt.Println("pool object backend count is ", len(pool.GetBackends()))
+		fmt.Println("direct pool backend count is ", len(poolBackends))
+
 	}
 }
 

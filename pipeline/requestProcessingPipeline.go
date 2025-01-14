@@ -1,6 +1,8 @@
 package pipeline
 
 import (
+	"fmt"
+
 	"github.com/yasastharinda9511/go_gateway_api/message"
 	"github.com/yasastharinda9511/go_gateway_api/pool"
 	"github.com/yasastharinda9511/go_gateway_api/ruleStore"
@@ -61,6 +63,7 @@ func (p *RequestProcessingPipeline) Execute(requestMessage *message.HttpRequestM
 
 	if backendErr != nil {
 		p.handleError(backendErr, requestMessage)
+		fmt.Println(backendErr.Error())
 		return
 	}
 

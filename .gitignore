@@ -26,7 +26,6 @@ go.work.sum
 
 # IDE/editor specific
 .idea/
-.vscode/
 *.iml
 
 # Logs
@@ -51,3 +50,7 @@ go.work.sum
 
 go1.23.1.linux-amd64.tar.gz
 go1.23.1.linux-amd64.tar.gz.sha256
+branch_structure.json
+temp_auto_push.bat
+temp_interactive_push.bat
+.gitignore

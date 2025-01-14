@@ -13,6 +13,17 @@ type WeightedLoadBalancer struct {
 	mutex        sync.Mutex
 }
 
+// UpdateBackends implements LoadBalancer.
+func (lb *WeightedLoadBalancer) UpdateBackends(backends []*Backend) {
+	lb.backends = backends
+	totalWeight := 0
+	for _, backend := range backends {
+		totalWeight += backend.GetWeight()
+	}
+
+	lb.toltalWeight = totalWeight
+}
+
 // NewWeightedLoadBalancer creates a new WeightedLoadBalancer
 func NewWeightedLoadBalancer(backends []*Backend) (*WeightedLoadBalancer, error) {
 	totalWeight := 0

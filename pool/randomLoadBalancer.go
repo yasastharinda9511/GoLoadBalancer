@@ -10,6 +10,11 @@ type RandomLoadBalancer struct {
 	mu       sync.Mutex
 }
 
+// UpdateBackends implements LoadBalancer.
+func (r *RandomLoadBalancer) UpdateBackends(backends []*Backend) {
+	r.backends = backends
+}
+
 func NewRandomLoadBalancer(backends []*Backend) (*RandomLoadBalancer, error) {
 
 	return &RandomLoadBalancer{
