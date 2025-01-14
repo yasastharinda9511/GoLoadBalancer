@@ -15,7 +15,7 @@ rules:
       backends:
         - url: "http://localhost:3000"
           weight: 1
-        - url: "http://localhost:3001"
+        - url: "https://run.mocky.io/v3/b59733b2-3f7f-4f93-a00d-d536cfecbff9"
           weight: 1
         - url: "http://localhost:3002"
           weight: 1

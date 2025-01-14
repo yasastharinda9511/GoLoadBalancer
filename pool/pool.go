@@ -2,6 +2,7 @@ package pool
 
 import (
 	"io"
+	"net/http"
 	"time"
 
 	"github.com/yasastharinda9511/go_gateway_api/dispatcher"
@@ -53,10 +54,7 @@ func (p *Pool) HandleBackendCall(requestMessage *message.HttpRequestMessage) (in
 	if err != nil {
 		return -1, nil, err
 	}
-
-	dispatch := dispatcher.NewHTTPDispatcher(10 * time.Second)
-	endcall := backend.GetURL() + requestMessage.GetURL()
-	resp, err := dispatch.CallBackend(dispatcher.GET, endcall, requestMessage.GetHeaders(), requestMessage.GetQueryParams())
+	resp, err := p.responseFromBackend(requestMessage, backend)
 
 	if err != nil {
 		// Write an error response
@@ -74,4 +72,21 @@ func (p *Pool) HandleBackendCall(requestMessage *message.HttpRequestMessage) (in
 
 	statusCode := resp.StatusCode
 	return statusCode, body, nil
+}
+
+func (p *Pool) responseFromBackend(requestMessage *message.HttpRequestMessage, backend *Backend) (*http.Response, error) {
+
+	endcall := backend.GetURL() + requestMessage.GetURL()
+	backendProtocol := backend.GetProtocol()
+
+	if backendProtocol == HTTP {
+		httpDispatch := dispatcher.NewHTTPDispatcher(10 * time.Second)
+		return httpDispatch.CallBackend(dispatcher.GET, endcall, requestMessage.GetHeaders(), requestMessage.GetQueryParams())
+	} else if backendProtocol == HTTPS {
+		httpsDispatch := dispatcher.NewHTTPSDispatcher(10*time.Second, false)
+		return httpsDispatch.CallBackend(dispatcher.GET, endcall, requestMessage.GetHeaders(), requestMessage.GetQueryParams())
+	}
+
+	return nil, errors.NewProtocolError(backend.GetURL())
+
 }
